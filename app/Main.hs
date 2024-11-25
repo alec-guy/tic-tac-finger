@@ -2,7 +2,7 @@ module Main where
 
 import Types 
 import Control.Applicative (Alternative, asum) 
-import Control.Monad (join, when)
+import Control.Monad (forever, when)
 import Network.Socket
 import Network.HTTP
 import qualified Data.List as List
