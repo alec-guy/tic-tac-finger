@@ -83,7 +83,18 @@ toChoice 3 = Third
 
 
 main :: IO ()
-main = runGame False X initialGame  
+main = withSocketsDo $ 
+  addrInfo <- getAddrInfo defaultHints (Just "localhost") (Just "http") 
+  port     <- openSocket addrInfo 
+  sockAddr <- return $ addrAddress addrInfo 
+  setSocketOption port NS.ReuseAddr 1 
+  bind socket sockAddr 
+  listen port 5 
+  putStrLn "listening..."
+   forever $ do 
+    (conn, clientAddr) <- accept port 
+
+  runGame False X initialGame  
 
 runGame :: Bool -> Mark -> TicTacToe -> IO ()
 runGame win playerShape tictac = do
