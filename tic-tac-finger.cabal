@@ -70,7 +70,7 @@ executable tic-tac-finger
     build-depends:    base ^>=4.20.0.0,
                       scotty ^>= 0.21,
                       random ^>= 1.2.1.1,
-                      aesom ^>= 2.2.2.0,
+                      aeson ^>= 2.2.2.0,
                       text ^>= 2.1.1
                       
     -- Directories containing source files.

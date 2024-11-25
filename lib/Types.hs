@@ -1,8 +1,8 @@
 module Types where 
 
 data TicTacToe = Rows 
-               { rowOne :: Row
-               , rowTwo :: Row 
+               { rowOne   :: Row
+               , rowTwo   :: Row 
                , rowThree :: Row 
                } deriving (Eq, Show)
 
