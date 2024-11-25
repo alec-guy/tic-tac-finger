@@ -1,7 +1,6 @@
 module Main where
 
 import Types 
-import System.Random
 import Control.Applicative (Alternative, asum) 
 import Control.Monad (join, when)
 import Network.Socket
@@ -10,6 +9,7 @@ import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
 import Data.Maybe (fromJust)
+import Data.Random 
 
 initialGame :: TicTacToe 
 initialGame = Rows 
@@ -93,7 +93,7 @@ runGame win playerShape tictac = do
                          Nothing    -> exitFailure 
                          Just spots -> return spots
 
-        randomIndex <- getStdRandom (randomR (0 :: Int, 3 :: Int)) 
+        randomIndex <- getStdRandom (randomR (0 :: Int, length freeSpots)) 
         (row, spot) <- return $ freeSpots !! randomIndex
         t   <- return $ markGame (opposite playerShape) (toChoice row) (toChoice spot) tictac  -- NPC Playing against you
         maybeW  <- return $ winCond t 
