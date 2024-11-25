@@ -11,6 +11,9 @@ import Data.Maybe (fromJust)
 import System.Random 
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import Data.Aeson 
+
+
 
 initialGame :: TicTacToe 
 initialGame = Rows 
