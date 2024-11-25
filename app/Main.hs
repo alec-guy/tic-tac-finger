@@ -3,7 +3,7 @@ module Main where
 import Types 
 import GameLogic
 -----------------------------------------
-import Control.Monad (forever, when)
+import Control.Monad (forever)
 import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
@@ -40,32 +40,30 @@ main = do
     homepage <- TIO.readFile "frontend/index.html"
     scotty "8000" $ do 
         get "/" (html homepage)
-        get "/runGame" $ do
+        get "/runNPC"  $  do
+            
+        get "/runUser" $ do 
         
         
-    runGame False X initialGame  
+    runNPC False X initialGame  
 
-
-runGame :: Bool -> Mark -> TicTacToe -> IO 
-runGame win playerShape tictac = do
-    when (win /= True) $ do 
+runUser :: Mark -> (Choice, Choice) -> TicTacToe -> IO (TicTacToe, Maybe Mark )
+runUser win shape (rowChoice, spotChoice) tictac = do 
+    t <- return $ markGame shape rowChoice spotChoice tictac 
+    maybeW <- return $ winCond t 
+    return (t, maybeW)
+    
+runNPC :: Mark -> TicTacToe -> IO (TicTacToe, Maybe Mark)
+runNPC shape tictac = do 
         freeSpots   <- do 
                         case getFreeSpots tictac of 
                          Nothing    -> exitFailure 
                          Just spots -> return spots
         shuffledSpots <- shuffle freeSpots 
         (row, spot)   <- return $ head shuffledSpots
-        t   <- return $ markGame (opposite playerShape) (toChoice row) (toChoice spot) tictac  -- NPC Playing against you
+        t   <- return $ markGame shape (toChoice row) (toChoice spot) tictac  -- NPC Playing against you
         maybeW  <- return $ winCond t 
-        case maybeW of 
-         Nothing -> do 
-                     putStrLn $ show t 
-         (Just m) -> do 
-                      putStrLn $ (show m) ++ "is the winner"
-                      putStrLn $ show t
-                      runGame True playerShape t 
-        do 
-         runGame win playerShape t 
+        return (t, maybeW)
 
 
 
