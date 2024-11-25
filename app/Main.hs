@@ -9,7 +9,7 @@ import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
 import Data.Maybe (fromJust)
-import Data.Random 
+import System.Random 
 
 initialGame :: TicTacToe 
 initialGame = Rows 
@@ -42,7 +42,7 @@ winCondTwo t = do
           winCondOne r = 
             case r of 
              (Just Circle, Just Circle, Just Circle) -> Just Circle 
-             (Just X, Just X ,Just X)                -> Just Circle
+             (Just X, Just X ,Just X)                -> Just X
              _                                       -> Nothing 
 
 
@@ -92,9 +92,8 @@ runGame win playerShape tictac = do
                         case getFreeSpots tictac of 
                          Nothing    -> exitFailure 
                          Just spots -> return spots
-
-        randomIndex <- getStdRandom (randomR (0 :: Int, length freeSpots)) 
-        (row, spot) <- return $ freeSpots !! randomIndex
+        shuffledSpots <- shuffle freeSpots 
+        (row, spot)   <- return $ head shuffledSpots
         t   <- return $ markGame (opposite playerShape) (toChoice row) (toChoice spot) tictac  -- NPC Playing against you
         maybeW  <- return $ winCond t 
         case maybeW of 
@@ -106,11 +105,20 @@ runGame win playerShape tictac = do
                       runGame True playerShape t 
         do 
          runGame win playerShape t 
-    putStrLn "Would you like to play again?"
-    choice <- getLine 
-    putStrLn "Well too bad."
-    return ()
 
+
+
+-- AI came up with this absolutley everything else is 
+-- my work with 0 AI input
+-- I was stuck here because I did not know how 
+-- how to shuffle a list or get a random element. 
+shuffle :: [a] -> IO [a]
+shuffle [] = return []
+shuffle xs = do
+    i <- randomRIO (0, length xs - 1)
+    let (left, (x:right)) = splitAt i xs
+    rest <- shuffle (left ++ right)
+    return (x:rest)
 
 getFreeSpots :: TicTacToe -> Maybe [(Int, Int)]
 getFreeSpots t = do 

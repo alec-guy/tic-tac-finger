@@ -1,5 +1,4 @@
 module Types where 
-import System.Random 
 
 data TicTacToe = Rows 
                { rowOne :: Row

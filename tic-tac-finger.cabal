@@ -70,8 +70,8 @@ executable tic-tac-finger
     build-depends:    base ^>=4.20.0.0,
                       HTTP ^>= 4000.4.0, 
                       network ^>= 3.2.5.0,
-                      random-fu ^>= 0.3.0.0
-
+                      random ^>= 1.2.1.1
+                      
     -- Directories containing source files.
     hs-source-dirs:   app, lib
 
