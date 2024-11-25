@@ -84,15 +84,31 @@ toChoice 3 = Third
 
 main :: IO ()
 main = withSocketsDo $ 
-  addrInfo <- getAddrInfo defaultHints (Just "localhost") (Just "http") 
-  port     <- openSocket addrInfo 
-  sockAddr <- return $ addrAddress addrInfo 
-  setSocketOption port NS.ReuseAddr 1 
-  bind socket sockAddr 
-  listen port 5 
-  putStrLn "listening..."
+   handleStream <- (openTCPConnection "localhost" 8000) :: HandleStream String 
    forever $ do 
-    (conn, clientAddr) <- accept port 
+    eitherConErrorOrRequest <- receiveHTTP handleStream
+    case eitherConErrorOrRequest of 
+        Left errCon     -> 
+        Right (request) -> do 
+            let rquri     = rqUri request 
+                rqmethod  = rqMethod request 
+                rqheaders = rqHeaders request 
+                rqbody    = rqBody request 
+                path      = uriPath rquri 
+            
+            case path of 
+                "/" -> 
+                _   -> let  fourOFourResponsePager <- readFile "frontend/notFound/index.html"
+                            notFoundResponse = Response 
+                                               {rspCode = (4,0,4)
+                                               ,rspReason "Unrecognized path"
+                                               ,rspHeaders = [mkHeader HdrContentType "text/html" 
+                                                             ,mkHeader HdrContentLength (length fourOFourResponsePager)
+                                                             ]
+                                               ,rspBody = fourOFourResponsePager
+                                               }
+                       in respondHTTP handleStream notFoundResponse
+            
 
   runGame False X initialGame  
 
