@@ -83,11 +83,12 @@ gridItem maybeMark (row,cell ) =
 showMark : Mark -> Html Msg 
 showMark mark = if mark == X then text "X" else text "Circle"
 
-getNPCMove : Cmd Msg
-getNPCMove =
-  Http.get
-    { url = "https://elm-lang.org/api/random-quotes"
-    , expect = Http.expectJson GotQuote quoteDecoder
+sendFirstMover : Cmd Msg
+sendFirstMover =
+  Http.post
+    { url    = "/firstMover"
+    , body   = 
+    , expect = Http.expectJson GotFirstMove quoteDecoder
     }
 
 
