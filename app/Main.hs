@@ -3,10 +3,13 @@ module Main where
 import Types 
 import System.Random
 import Control.Applicative (Alternative, asum) 
-import Control.Monad (when)
+import Control.Monad (join, when)
 import Network.Socket
 import Network.HTTP
 import qualified Data.List as List
+import System.Exit 
+import Control.Exception 
+import Data.Maybe (fromJust)
 
 initialGame :: TicTacToe 
 initialGame = Rows 
@@ -78,25 +81,20 @@ toChoice 1 = First
 toChoice 2 = Second 
 toChoice 3 = Third 
 
-initialPlayer :: Player
-initialPlayer = Player {movesMade = []}
-
-updateMovesMade :: (RowChosen, SpotTaken) -> Player -> Player 
-updateMovesMade t p = p {movesMade = t : (movesMade p)}
 
 main :: IO ()
-main = do 
-    let user = initialPlayer
-        npc  = initialPlayer
-    runGame (Just Circle) X initialGame user npc 
+main = runGame False X initialGame  
 
-runGame :: Maybe Mark -> Mark -> TicTacToe -> Player -> Player -> IO ()
-runGame shape playerShape tictac user npc = 
-    when (shape /= Nothing) $ do 
-        randomSpot  <- getStdRandom (randomR (1 :: Int, 3 :: Int)) 
-        randomRow   <- getStdRandom (randomR (1 :: Int, 3 :: Int))   
-        (row, spot) <- getSpotAndRow (movesMade npc) randomSpot randomRow 
-        newNPC <-   return $ updateMovesMade (row, spot) npc
+runGame :: Bool -> Mark -> TicTacToe -> IO ()
+runGame win playerShape tictac = do
+    when (win /= True) $ do 
+        freeSpots   <- do 
+                        case getFreeSpots tictac of 
+                         Nothing    -> exitFailure 
+                         Just spots -> return spots
+
+        randomIndex <- getStdRandom (randomR (0 :: Int, 3 :: Int)) 
+        (row, spot) <- return $ freeSpots !! randomIndex
         t   <- return $ markGame (opposite playerShape) (toChoice row) (toChoice spot) tictac  -- NPC Playing against you
         maybeW  <- return $ winCond t 
         case maybeW of 
@@ -105,18 +103,26 @@ runGame shape playerShape tictac user npc =
          (Just m) -> do 
                       putStrLn $ (show m) ++ "is the winner"
                       putStrLn $ show t
-                      runGame Nothing playerShape t user newNPC
+                      runGame True playerShape t 
         do 
-         runGame shape playerShape t user newNPC
+         runGame win playerShape t 
+    putStrLn "Would you like to play again?"
+    choice <- getLine 
+    putStrLn "Well too bad."
+    return ()
 
 
-getSpotsFree :: TicTacToe -> [(Int, Int)]
-getSpotAndRow :: [(RowChosen, SpotTaken)] -> SpotTaken -> RowChosen -> IO (RowChosen, SpotTaken)
-getSpotAndRow choicesMade spot row = do 
-        case List.lookup row choicesMade of 
-            Nothing -> return (row, spot)
-            _       -> do 
-                        putStrLn "Calling this"
-                        randomSpot  <- getStdRandom (randomR (1 :: Int, 3 :: Int)) 
-                        randomRow   <- getStdRandom (randomR (1 :: Int, 3 :: Int))
-                        getSpotAndRow choicesMade randomSpot randomRow  
+getFreeSpots :: TicTacToe -> Maybe [(Int, Int)]
+getFreeSpots t = do 
+    let firstRow  = rowOne t 
+        secondRow = rowTwo t 
+        thirdRow  = rowThree t 
+    spots <- return $ filter (/= Nothing) [getSpot 1 firstRow, getSpot 2 secondRow, getSpot 3 thirdRow] 
+    case spots of 
+        []       ->  Nothing 
+        _        ->  Just $ fromJust <$> spots
+    where getSpot :: Int -> Row -> Maybe (Int, Int)
+          getSpot i (_,_,Nothing)    = Just (i,3)
+          getSpot i (_, Nothing , _) = Just (i,2)
+          getSpot i (Nothing, _ , _) = Just (i,1)
+          getSpot _  _               = Nothing

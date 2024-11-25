@@ -19,10 +19,4 @@ data Choice = First
             deriving (Eq, Show, Enum, Ord)
 
 
-data Player = Player 
-            {movesMade :: [(RowChosen, SpotTaken)]
-            } 
-            deriving (Eq, Show)
 
-type RowChosen = Int 
-type SpotTaken = Int 
