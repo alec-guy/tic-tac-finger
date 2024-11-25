@@ -1,15 +1,16 @@
 module Main where
 
 import Types 
-import Control.Applicative (Alternative, asum) 
+import GameLogic
+-----------------------------------------
 import Control.Monad (forever, when)
-import Network.Socket
-import Network.HTTP
 import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
 import Data.Maybe (fromJust)
 import System.Random 
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 initialGame :: TicTacToe 
 initialGame = Rows 
@@ -21,98 +22,28 @@ initialGame = Rows
 emptyRow :: Row 
 emptyRow = (Nothing, Nothing, Nothing)
 
-markRow :: Mark -> Choice -> Row -> Row 
-markRow shape choice (x, y, z) = 
-    case choice of 
-        First -> case x of 
-                  Nothing -> (Just shape, y , z)
-                  _       -> (x, y, z)
-        Second -> case y of 
-                   Nothing -> (x, Just shape, z)
-                   _       -> (x, y, z)
-        Third -> case z of
-                  Nothing -> (x, y, Just shape)
-                  _       -> (x, y, z)
-
-
-winCondTwo :: TicTacToe -> Maybe Mark 
-winCondTwo t = do 
-    asum [winCondOne $ rowOne t, winCondOne $ rowTwo t, winCondOne $ rowThree t]
-    where winCondOne :: Row -> Maybe Mark
-          winCondOne r = 
-            case r of 
-             (Just Circle, Just Circle, Just Circle) -> Just Circle 
-             (Just X, Just X ,Just X)                -> Just X
-             _                                       -> Nothing 
-
-
-winCondThree :: TicTacToe -> Maybe Mark 
-winCondThree t = 
-    case (rowOne t, rowTwo t, rowThree t) of 
-        ((Just Circle,_,_), (Just Circle,_,_), (Just Circle,_,_)) ->  Just Circle 
-        ((_,Just Circle,_), (_,Just Circle,_), (_,Just Circle,_)) ->  Just Circle 
-        ((_,_,Just Circle), (_,_,Just Circle), (_,_,Just Circle)) ->  Just Circle 
-        ((Just Circle,_,_), (_,Just Circle,_), (_,_,Just Circle)) ->  Just Circle 
-        ((Just X,_,_),(Just X,_,_),(Just X,_,_))                  ->  Just X
-        ((_,Just X,_),(_,Just X,_),(_,Just X,_))                  ->  Just X
-        ((_,_,Just X),(_,_,Just X),(_,_,Just X))                  ->  Just X
-        ((Just X,_,_),(_,Just X,_),(_,_,Just X))                  ->  Just X 
-        _                                          ->  Nothing 
-
-
-
-winCond :: TicTacToe -> Maybe Mark 
-winCond t = asum [winCondTwo t, winCondThree t]
-
-
-opposite :: Mark -> Mark 
-opposite Circle = X 
-opposite X = Circle 
-
-markGame :: Mark -> Choice -> Choice -> TicTacToe -> TicTacToe 
-markGame shape rowChoice spotChoice game =  
-         case rowChoice of 
-            First  -> game {rowOne = markRow shape spotChoice (rowOne game)}
-            Second -> game {rowTwo = markRow shape spotChoice (rowTwo game)}
-            Third  -> game {rowThree = markRow shape spotChoice (rowThree game)}
-
 toChoice :: Int -> Choice 
 toChoice 1 = First 
 toChoice 2 = Second 
 toChoice 3 = Third 
 
+opposite :: Mark -> Mark 
+opposite Circle = X 
+opposite X = Circle 
+
 
 main :: IO ()
-main = withSocketsDo $ 
-   handleStream <- (openTCPConnection "localhost" 8000) :: HandleStream String 
-   forever $ do 
-    eitherConErrorOrRequest <- receiveHTTP handleStream
-    case eitherConErrorOrRequest of 
-        Left errCon     -> 
-        Right (request) -> do 
-            let rquri     = rqUri request 
-                rqmethod  = rqMethod request 
-                rqheaders = rqHeaders request 
-                rqbody    = rqBody request 
-                path      = uriPath rquri 
-            
-            case path of 
-                "/" -> 
-                _   -> let  fourOFourResponsePager <- readFile "frontend/notFound/index.html"
-                            notFoundResponse = Response 
-                                               {rspCode = (4,0,4)
-                                               ,rspReason "Unrecognized path"
-                                               ,rspHeaders = [mkHeader HdrContentType "text/html" 
-                                                             ,mkHeader HdrContentLength (length fourOFourResponsePager)
-                                                             ]
-                                               ,rspBody = fourOFourResponsePager
-                                               }
-                       in respondHTTP handleStream notFoundResponse
-            
+main = do 
+    homepage <- TIO.readFile "frontend/index.html"
+    scotty "8000" $ do 
+        get "/" (html homepage)
+        get "/runGame" $ do
+        
+        
+    runGame False X initialGame  
 
-  runGame False X initialGame  
 
-runGame :: Bool -> Mark -> TicTacToe -> IO ()
+runGame :: Bool -> Mark -> TicTacToe -> IO 
 runGame win playerShape tictac = do
     when (win /= True) $ do 
         freeSpots   <- do 

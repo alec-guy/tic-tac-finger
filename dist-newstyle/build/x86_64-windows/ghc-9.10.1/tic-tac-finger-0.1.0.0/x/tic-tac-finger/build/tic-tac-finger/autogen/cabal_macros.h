@@ -40,6 +40,16 @@
   (major1) == 3 && (major2) <  2 || \
   (major1) == 3 && (major2) == 2 && (minor) <= 6)
 #endif /* MIN_VERSION_network */
+/* package network-uri-2.6.4.2 */
+#ifndef VERSION_network_uri
+#define VERSION_network_uri "2.6.4.2"
+#endif /* VERSION_network_uri */
+#ifndef MIN_VERSION_network_uri
+#define MIN_VERSION_network_uri(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  6 || \
+  (major1) == 2 && (major2) == 6 && (minor) <= 4)
+#endif /* MIN_VERSION_network_uri */
 /* package random-1.2.1.2 */
 #ifndef VERSION_random
 #define VERSION_random "1.2.1.2"
