@@ -1,15 +1,19 @@
+{-# LANGUAGE DeriveGeneric #-}
+import GHC.Generics 
+
 module Main where
 
 import Types 
 import GameLogic
 -----------------------------------------
-import Control.Monad (forever)
+import Control.Monad (forever, win)
 import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
 import Data.Maybe (fromJust)
 import System.Random 
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.Text.IO as TIO
 import Data.Aeson 
 
@@ -34,26 +38,49 @@ opposite :: Mark -> Mark
 opposite Circle = X 
 opposite X = Circle 
 
+data TicTacToeState = TicTacToeState 
+                    { userMove  :: (Int, Int)
+                    , userShape :: String 
+                    , npcMove   :: (Int,Int)
+                    , win       :: String     -- > Maybe String  -- >  Maybe Mark 
+                    } deriving (Generic, Show)
+
 
 main :: IO ()
 main = do 
     homepage <- TIO.readFile "frontend/index.html"
     scotty "8000" $ do 
         get "/" (html homepage)
-        get "/runNPC"  $  do
-            
-        get "/runUser" $ do 
-        
-        
-    runNPC False X initialGame  
+        return $ forever runGame 
 
-runUser :: Mark -> (Choice, Choice) -> TicTacToe -> IO (TicTacToe, Maybe Mark )
+runGame :: ActionM ((Choice, Choice), Maybe Mark , TicTacToe) 
+runGame shape (rowChoice, cellChoice) tictactoe = 
+    when (win /= Nothing) $ do 
+           get "/runNPC"  $  do
+
+           get "/runUser" $ do 
+              reqBody     <- body 
+              maybeTicS   <- return $ (decode reqBody :: Maybe TicTacToeState)
+              case maybeTicS of 
+                Nothing  -> return ()
+                (Just t) -> do 
+                             let rowChoice  = toChoice $ fst $ userMove t 
+                                 cellChoice = toChoice $ snd $ userMove t 
+                             case userShape t of 
+                              "Circle" -> do 
+                                           <- runUser Circle (rowChoice,cellChoice) initialGame 
+                              "X"      -> do 
+                                           <- runUser X (rowChoice, cellChoice) initialGame of 
+    
+     
+
+runUser :: Mark -> (Choice, Choice) -> TicTacToe -> ActionM ((Choice, Choice), Maybe Mark , TicTacToe)
 runUser win shape (rowChoice, spotChoice) tictac = do 
     t <- return $ markGame shape rowChoice spotChoice tictac 
     maybeW <- return $ winCond t 
     return (t, maybeW)
     
-runNPC :: Mark -> TicTacToe -> IO (TicTacToe, Maybe Mark)
+runNPC :: Mark -> TicTacToe -> ActionM ((Choice, Choice), Maybe Mark, TicTacToe)
 runNPC shape tictac = do 
         freeSpots   <- do 
                         case getFreeSpots tictac of 

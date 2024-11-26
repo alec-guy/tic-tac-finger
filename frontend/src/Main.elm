@@ -4,7 +4,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode exposing (..)
-
+import Dict exposing (Dict)
 
 
 -- MAIN
@@ -88,7 +88,7 @@ runUser : Cmd Msg
 runUser =
   Http.post
     { url    = "/runUser"
-    , body   = 
+    , body   =  jsonbody 
     , expect = Http.expectJson TicTacToeState quoteDecoder
     }
 
@@ -96,14 +96,16 @@ runNPC : Cmd Msg
 runNPC = 
  Http.post 
    { url = "/runNPC"
-   , body = 
+   , body = emptyBody 
    , expect = Http.expectJson TicTacToeState
    }
 type alias TicTacToeState = 
-       { userMove : (Int,Int)
-       , npcMove : (Int,Int)
-       , win      : Maybe Mark 
+       { userMove  : (Int,Int)       -- Maybe (Int,Int)
+       , userShape : String 
+       , npcMove   :  (Int,Int)       -- Maybe (Int,Int)
+       , win       : String         -- > Maybe String -- > Maybe Mark 
        }
+
 quoteDecoder : Decoder Quote
 quoteDecoder =
   map4 Quote
