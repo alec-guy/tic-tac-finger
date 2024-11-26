@@ -45,17 +45,39 @@ data TicTacToeState = TicTacToeState
                     , win       :: String     -- > Maybe String  -- >  Maybe Mark 
                     } deriving (Generic, Show)
 
+data GameLoopArgs = GameLoopArgs 
+                  { choice :: (Choice, Choice) 
+                  , win :: (Maybe Mark) 
+                  , game :: TicTacToe
+                  }
 
 main :: IO ()
 main = do 
     homepage <- TIO.readFile "frontend/index.html"
     scotty "8000" $ do 
         get "/" (html homepage)
-        return $ forever runGame 
+        return $ forever $ do 
+            get "/runNPC"  $  do
 
-runGame :: ActionM ((Choice, Choice), Maybe Mark , TicTacToe) 
-runGame shape (rowChoice, cellChoice) tictactoe = 
-    when (win /= Nothing) $ do 
+            get "/runUser" $ do 
+              reqBody     <- body 
+              maybeTicS   <- return $ (decode reqBody :: Maybe TicTacToeState)
+              case maybeTicS of 
+                Nothing  -> return ()
+                (Just t) -> do 
+                             let rowChoice  = toChoice $ fst $ userMove t 
+                                 cellChoice = toChoice $ snd $ userMove t 
+                             case userShape t of 
+                              "Circle" -> do 
+                                           (choice, maybeW, game)  <- runUser Circle (rowChoice,cellChoice) initialGame
+                                           json 
+
+                              "X"      -> do 
+                                           (choice, maybeW, game) <- runUser X (rowChoice, cellChoice) initialGame of 
+
+runGame :: GameLoopArgs -> ActionM GameLoopArgs
+runGame gameLoopArgs = 
+    when ((win gameLoopArgs) /= Nothing) $ do 
            get "/runNPC"  $  do
 
            get "/runUser" $ do 
@@ -68,9 +90,11 @@ runGame shape (rowChoice, cellChoice) tictactoe =
                                  cellChoice = toChoice $ snd $ userMove t 
                              case userShape t of 
                               "Circle" -> do 
-                                           <- runUser Circle (rowChoice,cellChoice) initialGame 
+                                           (choice, maybeW, game)  <- runUser Circle (rowChoice,cellChoice) initialGame
+
+
                               "X"      -> do 
-                                           <- runUser X (rowChoice, cellChoice) initialGame of 
+                                           (choice, maybeW, game) <- runUser X (rowChoice, cellChoice) initialGame of 
     
      
 
