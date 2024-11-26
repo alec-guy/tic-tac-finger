@@ -7,17 +7,17 @@ import Control.Applicative (asum)
 
 
 markRow :: Mark -> Choice -> Row -> Row 
-markRow shape choice (x, y, z) = 
+markRow shape choice (Row (x, y, z)) = 
     case choice of 
         First -> case x of 
-                  Nothing -> (Just shape, y , z)
-                  _       -> (x, y, z)
+                  Nothing -> Row (Just shape, y , z)
+                  _       -> Row (x, y, z)
         Second -> case y of 
-                   Nothing -> (x, Just shape, z)
-                   _       -> (x, y, z)
+                   Nothing -> Row (x, Just shape, z)
+                   _       -> Row (x, y, z)
         Third -> case z of
-                  Nothing -> (x, y, Just shape)
-                  _       -> (x, y, z)
+                  Nothing -> Row (x, y, Just shape)
+                  _       -> Row (x, y, z)
 
 
 winCondTwo :: TicTacToe -> Maybe Mark 
@@ -26,22 +26,22 @@ winCondTwo t = do
     where winCondOne :: Row -> Maybe Mark
           winCondOne r = 
             case r of 
-             (Just Circle, Just Circle, Just Circle) -> Just Circle 
-             (Just X, Just X ,Just X)                -> Just X
-             _                                       -> Nothing 
+             (Row (Just Circle, Just Circle, Just Circle)) -> Just Circle 
+             (Row (Just X, Just X ,Just X))                -> Just X
+             _                                             -> Nothing 
 
 
 winCondThree :: TicTacToe -> Maybe Mark 
 winCondThree t = 
     case (rowOne t, rowTwo t, rowThree t) of 
-        ((Just Circle,_,_), (Just Circle,_,_), (Just Circle,_,_)) ->  Just Circle 
-        ((_,Just Circle,_), (_,Just Circle,_), (_,Just Circle,_)) ->  Just Circle 
-        ((_,_,Just Circle), (_,_,Just Circle), (_,_,Just Circle)) ->  Just Circle 
-        ((Just Circle,_,_), (_,Just Circle,_), (_,_,Just Circle)) ->  Just Circle 
-        ((Just X,_,_),(Just X,_,_),(Just X,_,_))                  ->  Just X
-        ((_,Just X,_),(_,Just X,_),(_,Just X,_))                  ->  Just X
-        ((_,_,Just X),(_,_,Just X),(_,_,Just X))                  ->  Just X
-        ((Just X,_,_),(_,Just X,_),(_,_,Just X))                  ->  Just X 
+        (Row (Just Circle,_,_), Row (Just Circle,_,_), Row (Just Circle,_,_)) ->  Just Circle 
+        (Row (_,Just Circle,_), Row (_,Just Circle,_), Row (_,Just Circle,_)) ->  Just Circle 
+        (Row (_,_,Just Circle), Row (_,_,Just Circle), Row (_,_,Just Circle)) ->  Just Circle 
+        (Row (Just Circle,_,_), Row (_,Just Circle,_), Row (_,_,Just Circle)) ->  Just Circle 
+        (Row (Just X,_,_),Row (Just X,_,_),Row (Just X,_,_))                  ->  Just X
+        (Row (_,Just X,_),Row (_,Just X,_),Row (_,Just X,_))                  ->  Just X
+        (Row (_,_,Just X),Row (_,_,Just X),Row (_,_,Just X))                  ->  Just X
+        (Row (Just X,_,_),Row (_,Just X,_),Row (_,_,Just X))                  ->  Just X 
         _                                          ->  Nothing 
 
 winCond :: TicTacToe -> Maybe Mark 

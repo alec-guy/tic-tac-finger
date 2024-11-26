@@ -89,7 +89,7 @@ runUser =
   Http.post
     { url    = "/runUser"
     , body   =  jsonbody 
-    , expect = Http.expectJson TicTacToeState quoteDecoder
+    , expect = Http.expectJson ServerResponse responseDecoder 
     }
 
 runNPC : Cmd Msg 
@@ -97,17 +97,15 @@ runNPC =
  Http.post 
    { url = "/runNPC"
    , body = jsonbody
-   , expect = Http.expectJson TicTacToeState
+   , expect = Http.expectJson ServerResponse 
    }
-type alias TicTacToeState = 
-       { userMove  : (Int,Int)       -- Maybe (Int,Int)
-       , userShape : String 
-       , npcMove   : (Int,Int)       -- Maybe (Int,Int)
-       , win       : String         -- > Maybe String -- > Maybe Mark 
+type alias ServerResponse  = 
+       { win : String      -- > Maybe String -- > Maybe Mark 
+       , tictactoe : [(S)]
        }
 
-quoteDecoder : Decoder Quote
-quoteDecoder =
+reponseDecoder : Decoder ServerResponse 
+responseDecoder =
   map4 Quote
     (field "quote" string)
     (field "source" string)
