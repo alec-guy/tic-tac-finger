@@ -13,16 +13,16 @@ import Data.Maybe (fromJust)
 -- Data Types
 data ServerResponse = ServerResponse 
                     { win :: String 
-                    , tictactoe :: TicTacToe
+                    , tictactoe :: Rows
                     } deriving (Eq, Show)
 
 data ServerRequest = ServerRequest 
-                   {tictactoeReq :: TicTacToe
+                   {tictactoeReq :: Rows
                    ,npcMark :: String
                    }
                    deriving (Eq, Show)
 
-data TicTacToe = Rows 
+data Rows = Rows 
                { rowOne   :: Row
                , rowTwo   :: Row 
                , rowThree :: Row 
@@ -59,9 +59,9 @@ instance ToJSON ServerResponse where
                              ,(fromString "tictactoe", toJSON $ t')
                              ]
 
--- ToJSON instance for TicTacToe
-instance ToJSON TicTacToe where 
-    toJSON :: TicTacToe -> Value 
+-- ToJSON instance for Rows
+instance ToJSON Rows where 
+    toJSON :: Rows -> Value 
     toJSON (Rows {rowOne = r1, rowTwo = r2, rowThree = r3}) = 
         Object $ KM.fromList 
                [(fromString "rowOne", toJSON r1)
@@ -77,9 +77,9 @@ instance FromJSON ServerRequest where
         tictac <- parseJSON $ fromJust $ KM.lookup mark m
         return $ ServerRequest {npcMark = toString mark , tictactoeReq = tictac}
 
--- FromJSON instance for TicTacToe
-instance FromJSON TicTacToe where 
-    parseJSON :: Value -> Parser TicTacToe 
+-- FromJSON instance for Rows
+instance FromJSON Rows where 
+    parseJSON :: Value -> Parser Rows 
     parseJSON (Object v) = do 
         row1 <- v .:? "rowOne"  -- Try to parse "rowOne"
         row2 <- v .:? "rowTwo"  -- Try to parse "rowTwo"

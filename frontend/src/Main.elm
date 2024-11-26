@@ -101,13 +101,22 @@ runNPC =
    }
 type alias ServerResponse  = 
        { win : String      -- > Maybe String -- > Maybe Mark 
-       , tictactoe : [(S)]
+       , tictactoe : Rows
        }
-
+type alias Rows = 
+          {rowOne : [(String, String)] 
+          ,rowTwo : [(String, String)]
+          ,rowThree : [(String,String)]
+          }
 reponseDecoder : Decoder ServerResponse 
 responseDecoder =
-  map4 Quote
-    (field "quote" string)
-    (field "source" string)
-    (field "author" string)
-    (field "year" int)
+  map2 ServerResponse
+    (field "win" string)
+    (field "tictactoe" rowsDecoder)
+rowsDecoder : Decoder Rows 
+rowsDecoder = 
+  map3 Rows 
+   (field "rowOne" (keyValuePairs string))
+   (field "rowTwo" (keyValuePairs string))
+   (field "rowThree" (keyValuePairs string))
+ 

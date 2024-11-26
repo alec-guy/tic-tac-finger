@@ -20,7 +20,7 @@ markRow shape choice (Row (x, y, z)) =
                   _       -> Row (x, y, z)
 
 
-winCondTwo :: TicTacToe -> Maybe Mark 
+winCondTwo :: Rows -> Maybe Mark 
 winCondTwo t = do 
     asum [winCondOne $ rowOne t, winCondOne $ rowTwo t, winCondOne $ rowThree t]
     where winCondOne :: Row -> Maybe Mark
@@ -31,7 +31,7 @@ winCondTwo t = do
              _                                             -> Nothing 
 
 
-winCondThree :: TicTacToe -> Maybe Mark 
+winCondThree :: Rows -> Maybe Mark 
 winCondThree t = 
     case (rowOne t, rowTwo t, rowThree t) of 
         (Row (Just Circle,_,_), Row (Just Circle,_,_), Row (Just Circle,_,_)) ->  Just Circle 
@@ -44,10 +44,10 @@ winCondThree t =
         (Row (Just X,_,_),Row (_,Just X,_),Row (_,_,Just X))                  ->  Just X 
         _                                          ->  Nothing 
 
-winCond :: TicTacToe -> Maybe Mark 
+winCond :: Rows -> Maybe Mark 
 winCond t = asum [winCondTwo t, winCondThree t]
 
-markGame :: Mark -> Choice -> Choice -> TicTacToe -> TicTacToe 
+markGame :: Mark -> Choice -> Choice -> Rows -> Rows 
 markGame shape rowChoice spotChoice game =  
          case rowChoice of 
             First  -> game {rowOne = markRow shape spotChoice (rowOne game)}

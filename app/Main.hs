@@ -19,9 +19,8 @@ import qualified Data.Text.IO as TIO
 import Data.Aeson 
 import GHC.Generics 
 import Web.Scotty
-import qualified Control.Monad.State as State
 
-initialGame :: TicTacToe 
+initialGame :: Rows 
 initialGame = Rows 
             { rowOne   = emptyRow 
             , rowTwo   = emptyRow 
@@ -82,7 +81,7 @@ shuffle xs = do
     rest <- shuffle (left ++ right)
     return (x:rest)
 
-getFreeSpots :: TicTacToe -> Maybe [(Int, Int)]
+getFreeSpots :: Rows -> Maybe [(Int, Int)]
 getFreeSpots t = do 
     let firstRow  = rowOne t 
         secondRow = rowTwo t 
