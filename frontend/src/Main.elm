@@ -36,11 +36,10 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
    case msg of 
     (EnteredShape s) -> 
-    (ClickedMe t)    -> ({model | takenSpots = t :: (takenSpots model)
-                         }
-                        ,Cmd.None 
-                        )
-    (GoesFirst b)    -> ({model | userGoesFirst = Just b}, Cmd.none)
+    (ClickedMe t)    -> ({model | takenSpots = t :: (takenSpots model)} ,runUser)
+    (GoesFirst b)    -> case b of 
+                         True ->  ({model | userGoesFirst = Just b}, Cmd.none)
+                         False -> ({model | userGoesFirst = Just b}, runNPC)
                 
     
 view : Model -> Html Msg 
@@ -83,15 +82,28 @@ gridItem maybeMark (row,cell ) =
 showMark : Mark -> Html Msg 
 showMark mark = if mark == X then text "X" else text "Circle"
 
-sendFirstMover : Cmd Msg
-sendFirstMover =
+
+
+runUser : Cmd Msg
+runUser =
   Http.post
-    { url    = "/firstMover"
+    { url    = "/runUser"
     , body   = 
-    , expect = Http.expectJson GotFirstMove quoteDecoder
+    , expect = Http.expectJson TicTacToeState quoteDecoder
     }
 
-
+runNPC : Cmd Msg 
+runNPC = 
+ Http.post 
+   { url = "/runNPC"
+   , body = 
+   , expect = Http.expectJson TicTacToeState
+   }
+type alias TicTacToeState = 
+       { userMove : (Int,Int)
+       , npcMove : (Int,Int)
+       , win      : Maybe Mark 
+       }
 quoteDecoder : Decoder Quote
 quoteDecoder =
   map4 Quote
