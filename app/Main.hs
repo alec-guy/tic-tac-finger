@@ -1,12 +1,12 @@
 {-# LANGUAGE DeriveGeneric #-}
-import GHC.Generics 
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
 import Types 
 import GameLogic
 -----------------------------------------
-import Control.Monad (forever, win)
+import Control.Monad (forever, when, void)
 import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
@@ -14,8 +14,11 @@ import Data.Maybe (fromJust)
 import System.Random 
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text.IO as TIO
 import Data.Aeson 
+import GHC.Generics 
+import Web.Scotty
 
 
 
@@ -38,73 +41,99 @@ opposite :: Mark -> Mark
 opposite Circle = X 
 opposite X = Circle 
 
+stringToMark :: String -> Maybe Mark 
+stringToMark "Circle" = Just Circle 
+stringToMark "X"      = Just X 
+stringToMark _        = Nothing 
+
 data TicTacToeState = TicTacToeState 
-                    { userMove  :: (Int, Int)
-                    , userShape :: String 
-                    , npcMove   :: (Int,Int)
-                    , win       :: String     -- > Maybe String  -- >  Maybe Mark 
+                    { userMove     :: (Int, Int)
+                    , userShape    :: String 
+                    , npcMove      :: (Int,Int)
+                    , winner       :: String     -- > Maybe String  -- >  Maybe Mark 
                     } deriving (Generic, Show)
+                    
+instance ToJSON TicTacToeState where 
+instance FromJSON TicTacToeState where 
 
 data GameLoopArgs = GameLoopArgs 
-                  { choice :: (Choice, Choice) 
+                  { choice :: (Maybe (Choice, Choice) )
                   , win :: (Maybe Mark) 
                   , game :: TicTacToe
                   }
-
+-- I FUCKED UP REALLY BADLY BUT TOMMOROW I WILL REDEEM MYSELF HOPEFULLY 
+-- DO NOT LAUGH AT MY MISTAKES 
 main :: IO ()
 main = do 
     homepage <- TIO.readFile "frontend/index.html"
-    scotty "8000" $ do 
-        get "/" (html homepage)
-        return $ forever $ do 
-            get "/runNPC"  $  do
+    scotty 8000 $ do 
+        get "/" (html $ LazyText.fromStrict homepage) 
+        void $ return $ runGame $ Left $ GameLoopArgs {choice = Nothing, win = Nothing, game = initialGame} 
 
-            get "/runUser" $ do 
-              reqBody     <- body 
-              maybeTicS   <- return $ (decode reqBody :: Maybe TicTacToeState)
-              case maybeTicS of 
-                Nothing  -> return ()
-                (Just t) -> do 
-                             let rowChoice  = toChoice $ fst $ userMove t 
-                                 cellChoice = toChoice $ snd $ userMove t 
-                             case userShape t of 
-                              "Circle" -> do 
-                                           (choice, maybeW, game)  <- runUser Circle (rowChoice,cellChoice) initialGame
-                                           json 
 
-                              "X"      -> do 
-                                           (choice, maybeW, game) <- runUser X (rowChoice, cellChoice) initialGame of 
-
-runGame :: GameLoopArgs -> ActionM GameLoopArgs
+runGame :: (Either GameLoopArgs ()) -> ActionM (Either GameLoopArgs ())
 runGame gameLoopArgs = 
-    when ((win gameLoopArgs) /= Nothing) $ do 
-           get "/runNPC"  $  do
+    case gameLoopArgs of 
+        Left g -> do 
+            reqBody   <- body 
+            maybeTics <- return $ (decode reqBody :: Maybe TicTacToeState)
+            case maybeTics of 
+             Nothing  -> return $ Right ()
+             (Just t) -> do 
+                          let shape    = userShape t 
+                          case stringToMark shape of 
+                            Nothing  -> return ()
+                            (Just m) -> do 
+                                         (choice0, maybeW, game0) <- runNPC m (game g)
+                                         jsonData $ jsonNPCData m (choice0,maybeW)
+                                         runGame $ GameLoopArgs {choice = choice0, win = maybeW, game = game0}
 
-           get "/runUser" $ do 
-              reqBody     <- body 
-              maybeTicS   <- return $ (decode reqBody :: Maybe TicTacToeState)
-              case maybeTicS of 
-                Nothing  -> return ()
-                (Just t) -> do 
+            reqBody     <- body 
+            maybeTics   <- return $ (decode reqBody :: Maybe TicTacToeState)
+            case maybeTics of 
+            Nothing  -> return ()
+            (Just t) -> do 
                              let rowChoice  = toChoice $ fst $ userMove t 
                                  cellChoice = toChoice $ snd $ userMove t 
                              case userShape t of 
                               "Circle" -> do 
-                                           (choice, maybeW, game)  <- runUser Circle (rowChoice,cellChoice) initialGame
+                                           (choice0, maybeW, game0)  <- runUser Circle (rowChoice,cellChoice) (game g)
+                                           jsonData $ jsonUserData "Circle" (choice0,maybeW)
+                                           runGame $ GameLoopArgs {choice = choice0, win = maybeW, game = game0}
 
 
                               "X"      -> do 
-                                           (choice, maybeW, game) <- runUser X (rowChoice, cellChoice) initialGame of 
-    
-     
+                                           (choice0,maybeW,game0) <- runUser X (rowChoice,cellChoice) (game g)
+                                           jsonData $ jsonUserData "X"
+                                           runGame $ GameLoopArgs {choice = choice0, win = maybeW, game = game0}
+        Right _ -> return $ Right ()
+jsonNPCData :: Mark -> (Maybe (Int,Int), Maybe Mark)  -> TicTacToeState
+jsonNPCData m (choice,maybeW) = TicTacToeState 
+                              {userMove   = (-1,-1)
+                              ,userShape  = show $ opposite $ m 
+                              ,npcMove    = fromJust choice
+                              ,winner     = show maybeW
+                              }
+jsonUserData :: String -> (Maybe (Int,Int), Maybe Mark) -> TicTacToeState
+jsonUserData s (choice,maybeW) = TicTacToeState 
+                               { userMove  = fromJust choice 
+                               , userShape = "Circle"
+                               , npcMove   = (-1, -1)
+                               , winner    = show maybeW
+                               }   
 
-runUser :: Mark -> (Choice, Choice) -> TicTacToe -> ActionM ((Choice, Choice), Maybe Mark , TicTacToe)
+runUser :: Mark -> (Choice, Choice) -> TicTacToe -> ActionM GameLoopArgs
 runUser win shape (rowChoice, spotChoice) tictac = do 
     t <- return $ markGame shape rowChoice spotChoice tictac 
     maybeW <- return $ winCond t 
-    return (t, maybeW)
+    return $ GameLoopArgs
+           {choice = Nothing 
+           ,win    = maybeW 
+           ,game   = t 
+           }
+
     
-runNPC :: Mark -> TicTacToe -> ActionM ((Choice, Choice), Maybe Mark, TicTacToe)
+runNPC :: Mark -> TicTacToe -> ActionM GameLoopArgs
 runNPC shape tictac = do 
         freeSpots   <- do 
                         case getFreeSpots tictac of 
@@ -114,7 +143,11 @@ runNPC shape tictac = do
         (row, spot)   <- return $ head shuffledSpots
         t   <- return $ markGame shape (toChoice row) (toChoice spot) tictac  -- NPC Playing against you
         maybeW  <- return $ winCond t 
-        return (t, maybeW)
+        return $ GameLoopArgs
+               {choice = Just (row,spot)
+               ,win    = maybeW 
+               ,game   = t 
+               }
 
 
 

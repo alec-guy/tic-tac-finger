@@ -96,13 +96,13 @@ runNPC : Cmd Msg
 runNPC = 
  Http.post 
    { url = "/runNPC"
-   , body = emptyBody 
+   , body = jsonbody
    , expect = Http.expectJson TicTacToeState
    }
 type alias TicTacToeState = 
        { userMove  : (Int,Int)       -- Maybe (Int,Int)
        , userShape : String 
-       , npcMove   :  (Int,Int)       -- Maybe (Int,Int)
+       , npcMove   : (Int,Int)       -- Maybe (Int,Int)
        , win       : String         -- > Maybe String -- > Maybe Mark 
        }
 
