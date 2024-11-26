@@ -99,6 +99,8 @@ runNPC =
    , body = jsonbody
    , expect = Http.expectJson ServerResponse 
    }
+
+type alias ServerRequest 
 type alias ServerResponse  = 
        { win : String      -- > Maybe String -- > Maybe Mark 
        , tictactoe : Rows
