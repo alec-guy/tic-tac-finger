@@ -51,34 +51,34 @@ initialModel = { mark = Nothing
   
 type GridItem = GridItem (Maybe Mark) (String, String)
 
-gridItemToRow : GridItem -> (String,String)
+gridItemToRow : GridItem -> (String, Maybe String)
 gridItemToRow g = case g of 
-                   (GridItem Nothing (_ , s))     -> ("Nothing", s)
-                   (GridItem (Just Circle) (_,s)) -> ("Circle", s)
-                   (GridItem _ (_,s))             -> ("X",s)
+                   (GridItem Nothing (_ , s))     -> (s, Nothing)
+                   (GridItem (Just Circle) (_,s)) -> (s , Just "Circle")
+                   (GridItem _ (_,s))             -> (s,Just "X")
 gridItemsToRows : List GridItem -> Rows 
 gridItemsToRows l = 
                   { rowOne   = (List.map gridItemToRow) <| (List.filter (\(GridItem _ (r, _)) -> r == "rowOne") l) 
                   , rowTwo   = (List.map gridItemToRow) <| (List.filter (\(GridItem _ (r, _)) -> r == "rowTwo") l) 
-                  , rowThree = (List.map gridItemToRow) <| (List.filter (\(GridItem _ (r, _)) -> r == "rowOne") l) 
+                  , rowThree = (List.map gridItemToRow) <| (List.filter (\(GridItem _ (r, _)) -> r == "rowThree") l) 
                   }
-type ProtoGridItem = ProtoGridItem (Maybe Mark) (Maybe String, String)
+type ProtoGridItem = ProtoGridItem (Maybe Mark) (String, Maybe String)
 
-rowToGridItem : (String, String) -> ProtoGridItem
+rowToGridItem : (String, Maybe String) -> ProtoGridItem
 rowToGridItem t = case t of 
-                   ("Nothing", s) ->  ProtoGridItem Nothing        (Nothing, s)
-                   ("Circle", s)  ->  ProtoGridItem (Just Circle)  (Nothing, s)
-                   ("X", s)       ->  ProtoGridItem (Just X)       (Nothing, s)
-                   _              ->  ProtoGridItem Nothing        (Nothing, "")
+                   (s, Nothing)        ->  ProtoGridItem Nothing        (s, Nothing)
+                   (s, Just "Circle")  ->  ProtoGridItem (Just Circle)  (s, Nothing)
+                   (s, Just "X")       ->  ProtoGridItem (Just X)       (s, Nothing)
+                   _                   ->  ProtoGridItem Nothing        ("", Nothing)
 
 rowsToGridItems : Rows -> List GridItem 
 rowsToGridItems r = 
     let protoOne   = (List.map rowToGridItem r.rowOne) 
         protoTwo   = (List.map rowToGridItem r.rowTwo) 
         protoThree = (List.map rowToGridItem r.rowThree)
-        f          = (\(ProtoGridItem m (_,s)) -> GridItem m ("rowOne", s))
-        g          = (\(ProtoGridItem m (_,s)) -> GridItem m ("rowTwo", s))
-        h          = (\(ProtoGridItem m (_,s)) -> GridItem m ("rowThree", s))
+        f          = (\(ProtoGridItem m (s,_)) -> GridItem m ("rowOne", s))
+        g          = (\(ProtoGridItem m (s,_)) -> GridItem m ("rowTwo", s))
+        h          = (\(ProtoGridItem m (s,_)) -> GridItem m ("rowThree", s))
     in (List.map f protoOne) ++ (List.map g protoTwo) ++ (List.map h protoThree)
 
 
@@ -90,9 +90,13 @@ getGridItem l i = case List.filter (\item -> item == i) l of
                    [x] -> Just x
                    _   -> Nothing
 hasSameRowAndC : GridItem -> GridItem -> Bool 
-hasSameRowAndC (GridItem _ t) (GridItem _ tPrime) = t == tPrime
+hasSameRowAndC (GridItem _ t) (GridItem _ tPrime) = (t == tPrime)
 insertGridItem : List GridItem -> GridItem -> List GridItem 
 insertGridItem l i = List.map (\item -> if hasSameRowAndC i item then i else item) l
+
+updateGridItem : Maybe Mark -> GridItem -> GridItem 
+updateGridItem maybeMark (GridItem _ t) =  GridItem maybeMark t
+
 
 ------------------------------------------------------
 
@@ -119,6 +123,14 @@ update msg model =
   _         -> case model.userGoesFirst of 
                 Nothing      -> (model,Cmd.none)
                 (Just True)  -> case msg of  
+                                 (ClickedMe gridit) ->  Debug.log "Clicked me activiated"
+                                                        ({model | rows = insertGridItem model.rows gridit
+                                                        ,recentlyClicked = Just gridit
+                                                        }
+                                                       , runUser 
+                                                         (gridItemsToRows (insertGridItem model.rows gridit)) 
+                                                         (showMaybeMark <| oppositeMark <| model.mark)
+                                                       )
                                  (GotServerResponse result) -> case result of 
                                                                 (Err e)  -> ({model | httpError = Just e}, Cmd.none)
                                                                 (Ok r)   -> ({model | win = Just r.win
@@ -126,13 +138,6 @@ update msg model =
                                                                              }
                                                                             , Cmd.none
                                                                             )
-                                 (ClickedMe gridit) -> ({model | rows = insertGridItem model.rows gridit
-                                                        ,recentlyClicked = Just gridit
-                                                        }
-                                                       , runUser 
-                                                         (gridItemsToRows model.rows) 
-                                                         (showMaybeMark <| oppositeMark <| model.mark)
-                                                       )
                                  _                  -> (model
                                                        ,runNPC 
                                                         (gridItemsToRows model.rows) 
@@ -157,8 +162,8 @@ update msg model =
 showMaybeMark : Maybe Mark -> String 
 showMaybeMark m = case m of 
                    Nothing       -> "Nothing"
-                   (Just Circle) -> "Circle"
-                   (Just X)      -> "X"
+                   (Just Circle) -> "Just Circle"
+                   (Just X)      -> "Just X"
 -------------------------------------------------
 --- VIEW 
 view : Model -> Html Msg 
@@ -171,6 +176,14 @@ view model =
                             [] 
                             [h1 [] [text "tic-tac-finger"]
                             ,grid model.rows model
+                            ,case model.httpError of  
+                              Nothing  -> text ""
+                              (Just e) -> case e of 
+                                           (Http.BadUrl s)       -> text <| "Bad url" ++ s
+                                           (Http.Timeout)        -> text "Timeout"
+                                           (Http.NetworkError)   -> text "Network error"
+                                           (Http.BadStatus i)      -> text <| "Bad status " ++ (String.fromInt i)
+                                           (Http.BadBody s)      -> text <| "Bad body" ++ s
                             ]
 chooseShape : Html Msg 
 chooseShape = div 
@@ -212,23 +225,11 @@ displayGridItem m g =
                     , style "font-size" "24px"
                     ]
                     [ button 
-                    [onDoubleClick <| ClickedMe <| g]
-                    [ case m.recentlyClicked of 
-                       Nothing -> case g of 
-                                    (GridItem Nothing _)        -> text ""
-                                    (GridItem (Just Circle) _ ) -> text "O"
-                                    (GridItem (Just X) _ )      -> text "X"
-                               
-                                   
-                       (Just gPrime) -> case g == gPrime of 
-                                         True -> case gPrime of 
-                                                  (GridItem Nothing _)        -> text <| showMaybeMark m.mark
-                                                  (GridItem (Just Circle) _ ) -> text "O"
-                                                  (GridItem (Just X) _ )      -> text "X"
-                                         False -> case g of 
-                                                   (GridItem Nothing _)        -> text ""
-                                                   (GridItem (Just Circle) _ ) -> text "O"
-                                                   (GridItem (Just X) _ )      -> text "X"
+                    [onDoubleClick <| ClickedMe <| (updateGridItem m.mark g)]
+                    [ case g of 
+                       (GridItem Nothing _)        -> text ""
+                       (GridItem (Just Circle) _ ) -> text "O"
+                       (GridItem (Just X) _ )      -> text "X"
                     ]
                   ]
 
@@ -245,9 +246,9 @@ type alias ServerResponse  =
        , tictactoe : Rows
        }
 type alias Rows = 
-          {rowOne   :   List (String, String)
-          ,rowTwo   :   List (String, String)
-          ,rowThree :   List (String,String)
+          {rowOne   :   List (String, Maybe String)
+          ,rowTwo   :   List (String, Maybe String)
+          ,rowThree :   List (String, Maybe String)
           }
     
 
@@ -270,19 +271,14 @@ encodeRows rows =
         ,("rowTwo", encodeRowList rows.rowTwo)
         ,("rowThree",encodeRowList rows.rowThree)
         ]
-encodeRowList : List (String, String) -> Encode.Value
+encodeRowList : List (String, Maybe String) -> Encode.Value
 encodeRowList rowList =
-    Encode.list 
-        (\(mark, cell) -> 
-            Encode.object 
-                [ (mark, Encode.string cell)
-                , (mark, Encode.string cell)
-                ]
-        ) 
-        rowList
+    Encode.dict identity (\v -> Encode.string <| (Maybe.withDefault "Nothing") v) ((Dict.fromList) rowList)
+  
 
 runNPC : Rows -> String -> Cmd Msg 
 runNPC rows npcMark = 
+ Debug.log "Running user move" 
  Http.post 
    { url = "/runNPC"
    , body = Http.jsonBody <| 
@@ -302,9 +298,9 @@ responseDecoder =
 rowsDecoder : Decoder Rows 
 rowsDecoder = 
   map3 Rows 
-   (field "rowOne" (keyValuePairs Decode.string))
-   (field "rowTwo" (keyValuePairs Decode.string))
-   (field "rowThree" (keyValuePairs Decode.string))
+   (field "rowOne" (keyValuePairs (Decode.nullable Decode.string)))
+   (field "rowTwo" (keyValuePairs (Decode.nullable Decode.string)))
+   (field "rowThree" (keyValuePairs (Decode.nullable Decode.string)))
  
 -----------------
 subscriptions : Model -> Sub Msg 

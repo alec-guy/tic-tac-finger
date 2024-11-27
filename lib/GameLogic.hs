@@ -6,23 +6,23 @@ import Control.Applicative (asum)
 
 
 
-markRow :: Mark -> Choice -> Row -> Row 
+markRow :: Mark -> Choice -> Row -> JSONRow 
 markRow shape choice (Row (x, y, z)) = 
     case choice of 
         First -> case x of 
-                  Nothing -> Row (Just shape, y , z)
-                  _       -> Row (x, y, z)
+                  Nothing -> rowToJSONRow (Row (Just shape, y , z))
+                  _       -> rowToJSONRow (Row (x, y, z))
         Second -> case y of 
-                   Nothing -> Row (x, Just shape, z)
-                   _       -> Row (x, y, z)
+                   Nothing -> rowToJSONRow (Row (x, Just shape, z))
+                   _       -> rowToJSONRow (Row (x, y, z))
         Third -> case z of
-                  Nothing -> Row (x, y, Just shape)
-                  _       -> Row (x, y, z)
+                  Nothing -> rowToJSONRow (Row (x, y, Just shape))
+                  _       -> rowToJSONRow (Row (x, y, z))
 
 
 winCondTwo :: Rows -> Maybe Mark 
 winCondTwo t = do 
-    asum [winCondOne $ rowOne t, winCondOne $ rowTwo t, winCondOne $ rowThree t]
+    asum [winCondOne $ jsonRowToRow $ rowOne t, winCondOne $ jsonRowToRow$ rowTwo t, winCondOne $ jsonRowToRow $ rowThree t]
     where winCondOne :: Row -> Maybe Mark
           winCondOne r = 
             case r of 
@@ -33,7 +33,7 @@ winCondTwo t = do
 
 winCondThree :: Rows -> Maybe Mark 
 winCondThree t = 
-    case (rowOne t, rowTwo t, rowThree t) of 
+    case (jsonRowToRow $ rowOne t, jsonRowToRow $ rowTwo t, jsonRowToRow $ rowThree t) of 
         (Row (Just Circle,_,_), Row (Just Circle,_,_), Row (Just Circle,_,_)) ->  Just Circle 
         (Row (_,Just Circle,_), Row (_,Just Circle,_), Row (_,Just Circle,_)) ->  Just Circle 
         (Row (_,_,Just Circle), Row (_,_,Just Circle), Row (_,_,Just Circle)) ->  Just Circle 
@@ -47,10 +47,12 @@ winCondThree t =
 winCond :: Rows -> Maybe Mark 
 winCond t = asum [winCondTwo t, winCondThree t]
 
+
+
 markGame :: Mark -> Choice -> Choice -> Rows -> Rows 
 markGame shape rowChoice spotChoice game =  
          case rowChoice of 
-            First  -> game {rowOne = markRow shape spotChoice (rowOne game)}
-            Second -> game {rowTwo = markRow shape spotChoice (rowTwo game)}
-            Third  -> game {rowThree = markRow shape spotChoice (rowThree game)}
+            First  -> game {rowOne = markRow shape spotChoice ((jsonRowToRow   . rowOne)   game)}
+            Second -> game {rowTwo = markRow shape spotChoice ((jsonRowToRow   . rowTwo)   game)}
+            Third  -> game {rowThree = markRow shape spotChoice ((jsonRowToRow . rowThree) game)}
 

@@ -9,36 +9,59 @@ import Data.Aeson.Types
 import Data.Aeson.Key
 import Data.Text
 import Data.Maybe (fromJust)
+import GHC.Generics 
 
 -- Data Types
 data ServerResponse = ServerResponse 
                     { win :: String 
                     , tictactoe :: Rows
-                    } deriving (Eq, Show)
+                    } deriving (Eq, Show, Generic)
+
+instance ToJSON ServerResponse where
+instance FromJSON ServerResponse where
 
 data ServerRequest = ServerRequest 
                    {tictactoeReq :: Rows
                    ,npcMark :: String
                    }
-                   deriving (Eq, Show)
+                   deriving (Eq, Show, Generic)
+instance FromJSON ServerRequest 
 
 data Rows = Rows 
-               { rowOne   :: Row
-               , rowTwo   :: Row 
-               , rowThree :: Row 
-               } deriving (Eq, Show)
+               { rowOne   :: JSONRow
+               , rowTwo   :: JSONRow
+               , rowThree :: JSONRow 
+               } deriving (Eq, Show, Generic)
+instance ToJSON Rows where 
+instance FromJSON Rows where 
 
-newtype Row = Row (Maybe Mark, Maybe Mark , Maybe Mark) deriving (Show, Eq)
+data JSONRow = JSONRow 
+             { first :: Maybe Mark
+             , second :: Maybe Mark
+             , third :: Maybe Mark
+             } deriving (Show, Eq, Generic)
+
+newtype Row = Row (Maybe Mark, Maybe Mark , Maybe Mark)
+
+rowToJSONRow (Row (m1, m2, m3)) = JSONRow {first = m1, second = m2, third = m3}
+jsonRowToRow (JSONRow {first    = m1,second=m2,third=m3}) = Row(m1,m2,m3)
+
+instance ToJSON JSONRow where 
+instance FromJSON JSONRow where 
 
 data Mark = X 
           | Circle 
-          deriving (Eq, Show)
+          deriving (Eq, Show, Generic)
+instance ToJSON Mark where 
+instance FromJSON Mark where 
 
 data Choice = First 
             | Second 
             | Third 
             deriving (Eq, Show, Enum, Ord)
 
+
+{-
 -- ToJSON instance for Mark
 instance ToJSON Mark where 
     toJSON X      = String "X"
@@ -73,9 +96,10 @@ instance ToJSON Rows where
 instance FromJSON ServerRequest where 
     parseJSON :: Value -> Parser ServerRequest 
     parseJSON (Object m) = do 
-        mark   <- return $ Prelude.head $ KM.keys m
-        tictac <- parseJSON $ fromJust $ KM.lookup mark m
-        return $ ServerRequest {npcMark = toString mark , tictactoeReq = tictac}
+        tictac <- parseJSON $ fromJust $ KM.lookup (fromString "tictactoeReq") m
+        mark   <- parseJSON $ fromJust $ KM.lookup (fromString "npcMark") m
+        return $ ServerRequest {npcMark = mark , tictactoeReq = tictac}
+    parseJSON _ = fail "Expected an object for Rows"
 
 -- FromJSON instance for Rows
 instance FromJSON Rows where 
@@ -85,6 +109,7 @@ instance FromJSON Rows where
         row2 <- v .:? "rowTwo"  -- Try to parse "rowTwo"
         row3 <- v .:? "rowThree"  -- Try to parse "rowThree"
         return $ Rows {rowOne = fromJust row1, rowTwo = fromJust row2, rowThree = fromJust row3}
+    parseJSON _ = fail "Expected an object for Rows"
 
 -- ToJSON instance for Row (which is a tuple of Maybe Mark values)
 instance ToJSON Row where 
@@ -108,3 +133,4 @@ instance FromJSON Row where
         three <- v .:? "third"   -- Try to parse the "third" key as Maybe Mark
         return $ Row (one, two, three)  -- Return the tuple
     parseJSON _ = fail "Expected an object for Row"  -- If it's not an object, fail
+-}

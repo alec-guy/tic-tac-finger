@@ -5424,17 +5424,21 @@ var $author$project$Main$gridItemToRow = function (g) {
 		var _v1 = g.a;
 		var _v2 = g.b;
 		var s = _v2.b;
-		return _Utils_Tuple2('Nothing', s);
+		return _Utils_Tuple2(s, $elm$core$Maybe$Nothing);
 	} else {
 		if (g.a.a.$ === 'Circle') {
 			var _v3 = g.a.a;
 			var _v4 = g.b;
 			var s = _v4.b;
-			return _Utils_Tuple2('Circle', s);
+			return _Utils_Tuple2(
+				s,
+				$elm$core$Maybe$Just('Circle'));
 		} else {
 			var _v5 = g.b;
 			var s = _v5.b;
-			return _Utils_Tuple2('X', s);
+			return _Utils_Tuple2(
+				s,
+				$elm$core$Maybe$Just('X'));
 		}
 	}
 };
@@ -5459,7 +5463,7 @@ var $author$project$Main$gridItemsToRows = function (l) {
 				function (_v2) {
 					var _v3 = _v2.b;
 					var r = _v3.a;
-					return r === 'rowOne';
+					return r === 'rowThree';
 				},
 				l)),
 		rowTwo: A2(
@@ -5490,6 +5494,7 @@ var $author$project$Main$insertGridItem = F2(
 			},
 			l);
 	});
+var $elm$core$Debug$log = _Debug_log;
 var $author$project$Main$Circle = {$: 'Circle'};
 var $author$project$Main$X = {$: 'X'};
 var $author$project$Main$oppositeMark = function (m) {
@@ -5510,30 +5515,33 @@ var $author$project$Main$ProtoGridItem = F2(
 		return {$: 'ProtoGridItem', a: a, b: b};
 	});
 var $author$project$Main$rowToGridItem = function (t) {
-	switch (t.a) {
-		case 'Nothing':
-			var s = t.b;
-			return A2(
-				$author$project$Main$ProtoGridItem,
-				$elm$core$Maybe$Nothing,
-				_Utils_Tuple2($elm$core$Maybe$Nothing, s));
-		case 'Circle':
-			var s = t.b;
-			return A2(
-				$author$project$Main$ProtoGridItem,
-				$elm$core$Maybe$Just($author$project$Main$Circle),
-				_Utils_Tuple2($elm$core$Maybe$Nothing, s));
-		case 'X':
-			var s = t.b;
-			return A2(
-				$author$project$Main$ProtoGridItem,
-				$elm$core$Maybe$Just($author$project$Main$X),
-				_Utils_Tuple2($elm$core$Maybe$Nothing, s));
-		default:
-			return A2(
-				$author$project$Main$ProtoGridItem,
-				$elm$core$Maybe$Nothing,
-				_Utils_Tuple2($elm$core$Maybe$Nothing, ''));
+	if (t.b.$ === 'Nothing') {
+		var s = t.a;
+		var _v1 = t.b;
+		return A2(
+			$author$project$Main$ProtoGridItem,
+			$elm$core$Maybe$Nothing,
+			_Utils_Tuple2(s, $elm$core$Maybe$Nothing));
+	} else {
+		switch (t.b.a) {
+			case 'Circle':
+				var s = t.a;
+				return A2(
+					$author$project$Main$ProtoGridItem,
+					$elm$core$Maybe$Just($author$project$Main$Circle),
+					_Utils_Tuple2(s, $elm$core$Maybe$Nothing));
+			case 'X':
+				var s = t.a;
+				return A2(
+					$author$project$Main$ProtoGridItem,
+					$elm$core$Maybe$Just($author$project$Main$X),
+					_Utils_Tuple2(s, $elm$core$Maybe$Nothing));
+			default:
+				return A2(
+					$author$project$Main$ProtoGridItem,
+					$elm$core$Maybe$Nothing,
+					_Utils_Tuple2('', $elm$core$Maybe$Nothing));
+		}
 	}
 };
 var $author$project$Main$rowsToGridItems = function (r) {
@@ -5543,7 +5551,7 @@ var $author$project$Main$rowsToGridItems = function (r) {
 	var h = function (_v4) {
 		var m = _v4.a;
 		var _v5 = _v4.b;
-		var s = _v5.b;
+		var s = _v5.a;
 		return A2(
 			$author$project$Main$GridItem,
 			m,
@@ -5552,7 +5560,7 @@ var $author$project$Main$rowsToGridItems = function (r) {
 	var g = function (_v2) {
 		var m = _v2.a;
 		var _v3 = _v2.b;
-		var s = _v3.b;
+		var s = _v3.a;
 		return A2(
 			$author$project$Main$GridItem,
 			m,
@@ -5561,7 +5569,7 @@ var $author$project$Main$rowsToGridItems = function (r) {
 	var f = function (_v0) {
 		var m = _v0.a;
 		var _v1 = _v0.b;
-		var s = _v1.b;
+		var s = _v1.a;
 		return A2(
 			$author$project$Main$GridItem,
 			m,
@@ -5576,125 +5584,49 @@ var $author$project$Main$rowsToGridItems = function (r) {
 var $author$project$Main$GotServerResponse = function (a) {
 	return {$: 'GotServerResponse', a: a};
 };
-var $elm$json$Json$Encode$list = F2(
-	function (func, entries) {
-		return _Json_wrap(
-			A3(
-				$elm$core$List$foldl,
-				_Json_addEntry(func),
-				_Json_emptyArray(_Utils_Tuple0),
-				entries));
-	});
-var $elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			$elm$core$List$foldl,
-			F2(
-				function (_v0, obj) {
-					var k = _v0.a;
-					var v = _v0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$encodeRowList = function (rowList) {
-	return A2(
-		$elm$json$Json$Encode$list,
-		function (_v0) {
-			var mark = _v0.a;
-			var cell = _v0.b;
-			return $elm$json$Json$Encode$object(
-				_List_fromArray(
-					[
-						_Utils_Tuple2(
-						mark,
-						$elm$json$Json$Encode$string(cell)),
-						_Utils_Tuple2(
-						mark,
-						$elm$json$Json$Encode$string(cell))
-					]));
-		},
-		rowList);
-};
-var $author$project$Main$encodeRows = function (rows) {
-	return $elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'rowOne',
-				$author$project$Main$encodeRowList(rows.rowOne)),
-				_Utils_Tuple2(
-				'rowTwo',
-				$author$project$Main$encodeRowList(rows.rowTwo)),
-				_Utils_Tuple2(
-				'rowThree',
-				$author$project$Main$encodeRowList(rows.rowThree))
-			]));
-};
-var $elm$json$Json$Decode$decodeString = _Json_runOnString;
-var $elm$http$Http$BadStatus_ = F2(
-	function (a, b) {
-		return {$: 'BadStatus_', a: a, b: b};
-	});
-var $elm$http$Http$BadUrl_ = function (a) {
-	return {$: 'BadUrl_', a: a};
-};
-var $elm$http$Http$GoodStatus_ = F2(
-	function (a, b) {
-		return {$: 'GoodStatus_', a: a, b: b};
-	});
-var $elm$http$Http$NetworkError_ = {$: 'NetworkError_'};
-var $elm$http$Http$Receiving = function (a) {
-	return {$: 'Receiving', a: a};
-};
-var $elm$http$Http$Sending = function (a) {
-	return {$: 'Sending', a: a};
-};
-var $elm$http$Http$Timeout_ = {$: 'Timeout_'};
-var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
-var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
-var $elm$core$Maybe$isJust = function (maybe) {
-	if (maybe.$ === 'Just') {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
-var $elm$core$Basics$compare = _Utils_compare;
-var $elm$core$Dict$get = F2(
-	function (targetKey, dict) {
-		get:
+var $elm$core$Dict$foldl = F3(
+	function (func, acc, dict) {
+		foldl:
 		while (true) {
 			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return $elm$core$Maybe$Nothing;
+				return acc;
 			} else {
 				var key = dict.b;
 				var value = dict.c;
 				var left = dict.d;
 				var right = dict.e;
-				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
-				switch (_v1.$) {
-					case 'LT':
-						var $temp$targetKey = targetKey,
-							$temp$dict = left;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue get;
-					case 'EQ':
-						return $elm$core$Maybe$Just(value);
-					default:
-						var $temp$targetKey = targetKey,
-							$temp$dict = right;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue get;
-				}
+				var $temp$func = func,
+					$temp$acc = A3(
+					func,
+					key,
+					value,
+					A3($elm$core$Dict$foldl, func, acc, left)),
+					$temp$dict = right;
+				func = $temp$func;
+				acc = $temp$acc;
+				dict = $temp$dict;
+				continue foldl;
 			}
 		}
 	});
+var $elm$json$Json$Encode$dict = F3(
+	function (toKey, toValue, dictionary) {
+		return _Json_wrap(
+			A3(
+				$elm$core$Dict$foldl,
+				F3(
+					function (key, value, obj) {
+						return A3(
+							_Json_addField,
+							toKey(key),
+							toValue(value),
+							obj);
+					}),
+				_Json_emptyObject(_Utils_Tuple0),
+				dictionary));
+	});
+var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
+var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $elm$core$Dict$Black = {$: 'Black'};
 var $elm$core$Dict$RBNode_elm_builtin = F5(
 	function (a, b, c, d, e) {
@@ -5755,6 +5687,7 @@ var $elm$core$Dict$balance = F5(
 			}
 		}
 	});
+var $elm$core$Basics$compare = _Utils_compare;
 var $elm$core$Dict$insertHelp = F3(
 	function (key, value, dict) {
 		if (dict.$ === 'RBEmpty_elm_builtin') {
@@ -5801,6 +5734,125 @@ var $elm$core$Dict$insert = F3(
 		} else {
 			var x = _v0;
 			return x;
+		}
+	});
+var $elm$core$Dict$fromList = function (assocs) {
+	return A3(
+		$elm$core$List$foldl,
+		F2(
+			function (_v0, dict) {
+				var key = _v0.a;
+				var value = _v0.b;
+				return A3($elm$core$Dict$insert, key, value, dict);
+			}),
+		$elm$core$Dict$empty,
+		assocs);
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$encodeRowList = function (rowList) {
+	return A3(
+		$elm$json$Json$Encode$dict,
+		$elm$core$Basics$identity,
+		function (v) {
+			return $elm$json$Json$Encode$string(
+				$elm$core$Maybe$withDefault('Nothing')(v));
+		},
+		$elm$core$Dict$fromList(rowList));
+};
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var $author$project$Main$encodeRows = function (rows) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'rowOne',
+				$author$project$Main$encodeRowList(rows.rowOne)),
+				_Utils_Tuple2(
+				'rowTwo',
+				$author$project$Main$encodeRowList(rows.rowTwo)),
+				_Utils_Tuple2(
+				'rowThree',
+				$author$project$Main$encodeRowList(rows.rowThree))
+			]));
+};
+var $elm$json$Json$Decode$decodeString = _Json_runOnString;
+var $elm$http$Http$BadStatus_ = F2(
+	function (a, b) {
+		return {$: 'BadStatus_', a: a, b: b};
+	});
+var $elm$http$Http$BadUrl_ = function (a) {
+	return {$: 'BadUrl_', a: a};
+};
+var $elm$http$Http$GoodStatus_ = F2(
+	function (a, b) {
+		return {$: 'GoodStatus_', a: a, b: b};
+	});
+var $elm$http$Http$NetworkError_ = {$: 'NetworkError_'};
+var $elm$http$Http$Receiving = function (a) {
+	return {$: 'Receiving', a: a};
+};
+var $elm$http$Http$Sending = function (a) {
+	return {$: 'Sending', a: a};
+};
+var $elm$http$Http$Timeout_ = {$: 'Timeout_'};
+var $elm$core$Maybe$isJust = function (maybe) {
+	if (maybe.$ === 'Just') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
+var $elm$core$Dict$get = F2(
+	function (targetKey, dict) {
+		get:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
+				switch (_v1.$) {
+					case 'LT':
+						var $temp$targetKey = targetKey,
+							$temp$dict = left;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+					case 'EQ':
+						return $elm$core$Maybe$Just(value);
+					default:
+						var $temp$targetKey = targetKey,
+							$temp$dict = right;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+				}
+			}
 		}
 	});
 var $elm$core$Dict$getMin = function (dict) {
@@ -6436,6 +6488,16 @@ var $author$project$Main$Rows = F3(
 	});
 var $elm$json$Json$Decode$keyValuePairs = _Json_decodeKeyValuePairs;
 var $elm$json$Json$Decode$map3 = _Json_map3;
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$nullable = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
+			]));
+};
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$rowsDecoder = A4(
 	$elm$json$Json$Decode$map3,
@@ -6443,15 +6505,18 @@ var $author$project$Main$rowsDecoder = A4(
 	A2(
 		$elm$json$Json$Decode$field,
 		'rowOne',
-		$elm$json$Json$Decode$keyValuePairs($elm$json$Json$Decode$string)),
+		$elm$json$Json$Decode$keyValuePairs(
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string))),
 	A2(
 		$elm$json$Json$Decode$field,
 		'rowTwo',
-		$elm$json$Json$Decode$keyValuePairs($elm$json$Json$Decode$string)),
+		$elm$json$Json$Decode$keyValuePairs(
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string))),
 	A2(
 		$elm$json$Json$Decode$field,
 		'rowThree',
-		$elm$json$Json$Decode$keyValuePairs($elm$json$Json$Decode$string)));
+		$elm$json$Json$Decode$keyValuePairs(
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string))));
 var $author$project$Main$responseDecoder = A3(
 	$elm$json$Json$Decode$map2,
 	$author$project$Main$ServerResponse,
@@ -6459,7 +6524,10 @@ var $author$project$Main$responseDecoder = A3(
 	A2($elm$json$Json$Decode$field, 'tictactoe', $author$project$Main$rowsDecoder));
 var $author$project$Main$runNPC = F2(
 	function (rows, npcMark) {
-		return $elm$http$Http$post(
+		return A3(
+			$elm$core$Debug$log,
+			'Running user move',
+			$elm$http$Http$post,
 			{
 				body: $elm$http$Http$jsonBody(
 					$elm$json$Json$Encode$object(
@@ -6501,10 +6569,10 @@ var $author$project$Main$showMaybeMark = function (m) {
 	} else {
 		if (m.a.$ === 'Circle') {
 			var _v1 = m.a;
-			return 'Circle';
+			return 'Just Circle';
 		} else {
 			var _v2 = m.a;
-			return 'X';
+			return 'Just X';
 		}
 	}
 };
@@ -6534,6 +6602,24 @@ var $author$project$Main$update = F2(
 				} else {
 					if (_v1.a) {
 						switch (msg.$) {
+							case 'ClickedMe':
+								var gridit = msg.a;
+								return A2(
+									$elm$core$Debug$log,
+									'Clicked me activiated',
+									_Utils_Tuple2(
+										_Utils_update(
+											model,
+											{
+												recentlyClicked: $elm$core$Maybe$Just(gridit),
+												rows: A2($author$project$Main$insertGridItem, model.rows, gridit)
+											}),
+										A2(
+											$author$project$Main$runUser,
+											$author$project$Main$gridItemsToRows(
+												A2($author$project$Main$insertGridItem, model.rows, gridit)),
+											$author$project$Main$showMaybeMark(
+												$author$project$Main$oppositeMark(model.mark)))));
 							case 'GotServerResponse':
 								var result = msg.a;
 								if (result.$ === 'Err') {
@@ -6556,20 +6642,6 @@ var $author$project$Main$update = F2(
 											}),
 										$elm$core$Platform$Cmd$none);
 								}
-							case 'ClickedMe':
-								var gridit = msg.a;
-								return _Utils_Tuple2(
-									_Utils_update(
-										model,
-										{
-											recentlyClicked: $elm$core$Maybe$Just(gridit),
-											rows: A2($author$project$Main$insertGridItem, model.rows, gridit)
-										}),
-									A2(
-										$author$project$Main$runUser,
-										$author$project$Main$gridItemsToRows(model.rows),
-										$author$project$Main$showMaybeMark(
-											$author$project$Main$oppositeMark(model.mark))));
 							default:
 								return _Utils_Tuple2(
 									model,
@@ -6738,6 +6810,11 @@ var $elm$html$Html$Events$onDoubleClick = function (msg) {
 };
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$Main$updateGridItem = F2(
+	function (maybeMark, _v0) {
+		var t = _v0.b;
+		return A2($author$project$Main$GridItem, maybeMark, t);
+	});
 var $author$project$Main$displayGridItem = F2(
 	function (m, g) {
 		return A2(
@@ -6759,55 +6836,22 @@ var $author$project$Main$displayGridItem = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$Events$onDoubleClick(
-							$author$project$Main$ClickedMe(g))
+							$author$project$Main$ClickedMe(
+								A2($author$project$Main$updateGridItem, m.mark, g)))
 						]),
 					_List_fromArray(
 						[
 							function () {
-							var _v0 = m.recentlyClicked;
-							if (_v0.$ === 'Nothing') {
-								if (g.a.$ === 'Nothing') {
-									var _v2 = g.a;
-									return $elm$html$Html$text('');
-								} else {
-									if (g.a.a.$ === 'Circle') {
-										var _v3 = g.a.a;
-										return $elm$html$Html$text('O');
-									} else {
-										var _v4 = g.a.a;
-										return $elm$html$Html$text('X');
-									}
-								}
+							if (g.a.$ === 'Nothing') {
+								var _v1 = g.a;
+								return $elm$html$Html$text('');
 							} else {
-								var gPrime = _v0.a;
-								var _v5 = _Utils_eq(g, gPrime);
-								if (_v5) {
-									if (gPrime.a.$ === 'Nothing') {
-										var _v7 = gPrime.a;
-										return $elm$html$Html$text(
-											$author$project$Main$showMaybeMark(m.mark));
-									} else {
-										if (gPrime.a.a.$ === 'Circle') {
-											var _v8 = gPrime.a.a;
-											return $elm$html$Html$text('O');
-										} else {
-											var _v9 = gPrime.a.a;
-											return $elm$html$Html$text('X');
-										}
-									}
+								if (g.a.a.$ === 'Circle') {
+									var _v2 = g.a.a;
+									return $elm$html$Html$text('O');
 								} else {
-									if (g.a.$ === 'Nothing') {
-										var _v11 = g.a;
-										return $elm$html$Html$text('');
-									} else {
-										if (g.a.a.$ === 'Circle') {
-											var _v12 = g.a.a;
-											return $elm$html$Html$text('O');
-										} else {
-											var _v13 = g.a.a;
-											return $elm$html$Html$text('X');
-										}
-									}
+									var _v3 = g.a.a;
+									return $elm$html$Html$text('X');
 								}
 							}
 						}()
@@ -6853,7 +6897,31 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$text('tic-tac-finger')
 							])),
-						A2($author$project$Main$grid, model.rows, model)
+						A2($author$project$Main$grid, model.rows, model),
+						function () {
+						var _v2 = model.httpError;
+						if (_v2.$ === 'Nothing') {
+							return $elm$html$Html$text('');
+						} else {
+							var e = _v2.a;
+							switch (e.$) {
+								case 'BadUrl':
+									var s = e.a;
+									return $elm$html$Html$text('Bad url' + s);
+								case 'Timeout':
+									return $elm$html$Html$text('Timeout');
+								case 'NetworkError':
+									return $elm$html$Html$text('Network error');
+								case 'BadStatus':
+									var i = e.a;
+									return $elm$html$Html$text(
+										'Bad status ' + $elm$core$String$fromInt(i));
+								default:
+									var s = e.a;
+									return $elm$html$Html$text('Bad body' + s);
+							}
+						}
+					}()
 					]));
 		}
 	}

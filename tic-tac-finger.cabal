@@ -72,6 +72,8 @@ executable tic-tac-finger
                       random ^>= 1.2.1.1,
                       aeson ^>= 2.2.2.0,
                       text ^>= 2.1.1,
+                      wai-middleware-static,
+                      bytestring
                       
     -- Directories containing source files.
     hs-source-dirs:   app, lib

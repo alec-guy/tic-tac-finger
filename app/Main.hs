@@ -6,7 +6,8 @@ module Main where
 import Types 
 import GameLogic
 -----------------------------------------
-import Control.Monad (forever, when, void)
+import Control.Monad (forever, when, void, )
+import Control.Applicative ((<|>))
 import qualified Data.List as List
 import System.Exit 
 import Control.Exception 
@@ -19,12 +20,14 @@ import qualified Data.Text.IO as TIO
 import Data.Aeson 
 import GHC.Generics 
 import Web.Scotty
+import qualified Data.ByteString as BS 
+import Network.Wai.Middleware.Static (staticPolicy, addBase, static)
 
 initialGame :: Rows 
 initialGame = Rows 
-            { rowOne   = emptyRow 
-            , rowTwo   = emptyRow 
-            , rowThree = emptyRow
+            { rowOne   = rowToJSONRow emptyRow 
+            , rowTwo   = rowToJSONRow emptyRow 
+            , rowThree = rowToJSONRow emptyRow
             }
 emptyRow :: Row 
 emptyRow = Row (Nothing, Nothing, Nothing)
@@ -49,13 +52,29 @@ main = do
     homepage <- TIO.readFile "frontend/index.html"
     scotty 8000 $ do 
         get "/" (html $ LazyText.fromStrict homepage) 
-        get "/runUser" $ do
-            req <- jsonData :: ActionM ServerRequest
+        
+        post "/runUser" $ do
+            bodyText <- Web.Scotty.catch (TE.decodeUtf8 <$> BS.toStrict <$> body) $ \e -> do 
+                        liftIO $ putStrLn (show $ (e :: ScottyException)) 
+                        finish
+            liftIO $ TIO.putStrLn bodyText 
+            liftIO $ putStrLn "hello world"
+            req <- Web.Scotty.catch (jsonData :: ActionM ServerRequest)  $ \e -> do 
+                   liftIO $ putStrLn (show $ (e :: ScottyException))
+                   finish
             let game = tictactoeReq req 
             json $ ServerResponse{win = show $ winCond game, tictactoe = game}
-
-        get "/runNPC" $ do
-            req <- jsonData :: ActionM ServerRequest
+        
+        
+        post "/runNPC" $ do
+            bodyText <- Web.Scotty.catch (TE.decodeUtf8 <$> BS.toStrict <$> body) $ \e -> do 
+                        liftIO $ putStrLn (show $ (e :: ScottyException)) 
+                        finish
+            liftIO $ TIO.putStrLn bodyText 
+            liftIO $ putStrLn "hello world"
+            req <- Web.Scotty.catch (jsonData :: ActionM ServerRequest)  $ \e -> do 
+                   liftIO $ putStrLn (show $ (e :: ScottyException))
+                   finish
             let game = tictactoeReq req 
                 mark = npcMark req 
             freeSpots <- return $ getFreeSpots game 
@@ -66,6 +85,8 @@ main = do
                                     column  = toChoice $ snd $ Prelude.head $ spot
                                     newGame = markGame (fromJust $ stringToMark mark) row column game 
                                 json $ ServerResponse{win = show $ winCond newGame, tictactoe = newGame}
+        
+
 
                                   
 
@@ -86,7 +107,10 @@ getFreeSpots t = do
     let firstRow  = rowOne t 
         secondRow = rowTwo t 
         thirdRow  = rowThree t 
-    spots <- return $ filter (/= Nothing) [getSpot 1 firstRow, getSpot 2 secondRow, getSpot 3 thirdRow] 
+    spots <- return $ filter (/= Nothing) [ getSpot 1  $ jsonRowToRow firstRow
+                                          , getSpot 2  $ jsonRowToRow secondRow
+                                          , getSpot 3  $ jsonRowToRow thirdRow
+                                          ] 
     case spots of 
         []       ->  Nothing 
         _        ->  Just $ fromJust <$> spots
