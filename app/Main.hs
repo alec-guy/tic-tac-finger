@@ -77,14 +77,15 @@ main = do
                    finish
             let game = tictactoeReq req 
                 mark = npcMark req 
-            freeSpots <- return $ getFreeSpots game 
-            case freeSpots of 
-                Nothing     -> return ()
-                (Just spot) -> do 
-                                let row     = toChoice $ fst $ Prelude.head $ spot 
-                                    column  = toChoice $ snd $ Prelude.head $ spot
-                                    newGame = markGame (fromJust $ stringToMark mark) row column game 
-                                json $ ServerResponse{win = show $ winCond newGame, tictactoe = newGame}
+            maybeFreeSpots     <- return $ getFreeSpots game 
+            case maybeFreeSpots of 
+             Nothing -> return ()
+             (Just freeSpots) -> do 
+                                  shuffledSpots <- shuffle freeSpots 
+                                  let row     = toChoice $ fst $ Prelude.head $ shuffledSpots
+                                      column  = toChoice $ snd $ Prelude.head $ shuffledSpots
+                                      newGame = markGame (fromJust $ stringToMark mark) row column game 
+                                  json $ ServerResponse{win = show $ winCond newGame, tictactoe = newGame}
         
 
 
@@ -94,7 +95,8 @@ main = do
 -- my work with 0 AI input
 -- I was stuck here because I did not know how 
 -- how to shuffle a list or get a random element. 
-shuffle :: [a] -> IO [a]
+-- but they made it return an IO monad but I made it return ActionM monad
+shuffle :: [a] -> ActionM [a]
 shuffle [] = return []
 shuffle xs = do
     i <- randomRIO (0, length xs - 1)
